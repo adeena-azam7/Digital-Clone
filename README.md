@@ -2,7 +2,7 @@
 
 **This is an AI clone, not the real person.**
 
-Live app: [PASTE YOUR STREAMLIT LINK HERE]
+Live app: 
 
 A chatbot that answers questions as me, using only documents I wrote about myself. It uses Retrieval-Augmented Generation (RAG): BM25 keyword search and dense embedding search, combined with Reciprocal Rank Fusion (RRF), and a Groq language model that answers in first person. It is built with Streamlit and deployed on Streamlit Community Cloud.
 
@@ -30,16 +30,19 @@ For every retrieved chunk (top 3) I checked by hand whether it **contains the an
 | **Q2.** What do you do to relax when you are exhausted? *(paraphrase, no shared content words)* | 1. faq #5: No<br>2. faq #4: No<br>3. faq #2: Yes<br>**Hits: 1/3** | 1. personality #1: Yes<br>2. study_habits #1: No<br>3. study_habits #2: No<br>**Hits: 1/3** | 1. faq #4: No<br>2. faq #3: No<br>3. faq #2: Yes<br>**Hits: 1/3** | **Dense.** It is the only mode that put an answer chunk (hobbies and recharging) at rank 1. BM25 matched filler words (do, you, to, when) and ranked the best chunk 12th. |
 | **Q3.** Which datasets do you use to validate SentinelGuard? | 1. faq #2: Yes<br>2. faq #6: Yes<br>3. projects #3: Yes<br>**Hits: 3/3** | 1. faq #6: Yes<br>2. projects #3: Yes<br>3. education #2: No<br>**Hits: 2/3** | 1. faq #6: Yes<br>2. faq #2: Yes<br>3. projects #3: Yes<br>**Hits: 3/3** | **BM25 and Hybrid.** The exact name SentinelGuard and the word "datasets" appear in all three chunks. Dense let in education #2, which talks about courses, not datasets. |
 | **Q4.** Why do you leave things until the last minute? *(paraphrase)* | 1. advice_for_juniors #1: Yes<br>2. personality #1: Yes<br>3. faq #5: No<br>**Hits: 2/3** | 1. study_habits #2: Yes<br>2. study_habits #1: Yes<br>3. advice_for_juniors #2: No<br>**Hits: 2/3** | 1. personality #1: Yes<br>2. study_habits #2: Yes<br>3. study_habits #1: Yes<br>**Hits: 3/3** | **Hybrid.** BM25 caught "last-minute", dense caught the "delay until the deadline" wording, and fusion kept the good chunks from both. |
-| **Q5.** What is your favorite movie? *(not in my notes)* | 1. faq #3: No<br>2. faq #5: No<br>3. faq #4: No<br>**Hits: 0/3** | 1. faq #3: No<br>2. personality #1: No<br>3. faq #1: No<br>**Hits: 0/3** | 1. faq #3: No<br>2. personality #1: No<br>3. faq #2: No<br>**Hits: 0/3** | **No mode can be right,** because my notes never mention a movie. The top dense similarity was only 0.13, against 0.27 to 0.49 for answerable questions. So the LLM must refuse. Clone's answer: [PASTE CLONE ANSWER] |
+| **Q5.** What is your favorite movie? *(not in my notes)* | 1. faq #3: No<br>2. faq #5: No<br>3. faq #4: No<br>**Hits: 0/3** | 1. faq #3: No<br>2. personality #1: No<br>3. faq #1: No<br>**Hits: 0/3** | 1.faq #3: No<br>2.personality #1: No<br>3. faq #2: No<br>**Hits: 0/3** | **No mode can be right,** because my notes never mention a movie. The top dense similarity was only 0.13, against 0.27 to 0.49 for answerable questions. So the LLM must refuse.|S
 
 ## 3. Failure case
 **Question:** "What do you do to relax when you are exhausted?" (Hybrid mode)
 
-**What the clone said:** [PASTE THE CLONE'S HYBRID ANSWER TO Q2 HERE, AND SAY IF IT WAS WRONG OR WEAK]
+**What the clone said:** 
+Question: "How many projects have you built?"
 
-**What went wrong in retrieval:** Hybrid dropped the best chunk. `personality.md` #1 (hobbies, "I pick up my sketchbook or brushes") was Dense rank 1 but BM25 rank 12, so its RRF score (0.0303) lost to three FAQ chunks (0.0311, 0.0308, 0.0306) and it fell out of the top 3. Two of the three chunks Hybrid kept (`faq.md` #4 and #3) did not contain the answer.
+What the clone said: the three modes gave three different wrong numbers. BM25 only: "I've built five projects." Dense only: 6 projects. Hybrid (RRF): 9 projects.
 
-**Why it happened:** my FAQ is split into only 6 chunks of 250 words, and each chunk mixes about 8 unrelated questions. These chunks are full of the words "you", "do", "what" and "I", so BM25 gives them high scores for almost any question, and `faq.md` appeared in the top 3 for nearly every query. RRF only looks at ranks, so one bad BM25 ranking can push a chunk that dense search ranked first out of the list.
+What went wrong: none of the answers is correct. My notes list 7 numbered projects plus 5 more in an "additional projects" list, so 12 in total (across projects.md chunks #1 to #5), and no sentence in my notes states the total.
+
+Why it happened: counting needs all five project chunks, but the clone only receives the top 3 chunks (top-k = 3). For this question BM25 retrieved faq.md #6, personality.md #1 and projects.md #1, so the clone saw only one numbered project (Project 1) and none of the additional list. With incomplete context the model guessed a number instead of saying it could not tell, which breaks my own rule "do not guess". Each mode retrieves a different top 3, which is why the guesses differ (5, 6, 9). This is a list and count question: the answer is spread over many chunks, and top-k retrieval is built to find single passages.
 
 ## 4. One improvement I would make next
 I would add a cross-encoder reranker over the hybrid results. The current ranking only looks at the question and each chunk separately. A reranker reads the question and the chunk together, so it can push the truly relevant chunk to the top and reduce weak answers like the failure case above.
