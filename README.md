@@ -1,5 +1,7 @@
 # DigitalTwin-RAG: Adeena Azam's AI Clone
 
+Live app: https://adeena-digital-clone.streamlit.app/
+
 **This is an AI clone, not the real person.**
 
 A chatbot that answers questions as me, using only documents I wrote about myself. It uses Retrieval-Augmented Generation (RAG): BM25 keyword search and dense embedding search, combined with Reciprocal Rank Fusion (RRF), and a Groq language model that answers in first person. It is built with Streamlit and deployed on Streamlit Community Cloud.
