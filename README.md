@@ -1,10 +1,13 @@
 # DigitalTwin-RAG: Adeena Azam's AI Clone
 
 Live app: https://adeena-digital-clone.streamlit.app/
+Code: https://github.com/adeena-azam7/Digital-Clone
 
 **This is an AI clone, not the real person.**
 
-A chatbot that answers questions as me, using only documents I wrote about myself. It uses Retrieval-Augmented Generation (RAG): BM25 keyword search and dense embedding search, combined with Reciprocal Rank Fusion (RRF), and a Groq language model that answers in first person. It is built with Streamlit and deployed on Streamlit Community Cloud.
+A chatbot that answers questions as me, using only documents I wrote about myself. 
+It uses Retrieval-Augmented Generation (RAG): BM25 keyword search and dense embedding search, combined with Reciprocal Rank Fusion (RRF), and a Groq language model that answers in first person. 
+It is built with Streamlit and deployed on Streamlit Community Cloud.
 
 ## How it works
 1. **Chunking:** documents in `data/` are split into chunks of 250 words with a 40-word overlap. Each chunk keeps its file name and chunk ID.
@@ -14,12 +17,14 @@ A chatbot that answers questions as me, using only documents I wrote about mysel
 5. **Generation:** the top 3 chunks and the question go to a Groq model with a persona prompt. It must answer in first person, only from the context, and say "I don't have that in my notes." when the answer is missing.
 6. **Security:** the API key is stored as a Streamlit secret (`GROQ_API_KEY`) and is not in the code.
 
-## 1. Knowledge base and why I chose it
+## 1. Knowledge base and why
 I used 9 documents with 25 chunks in total: `bio.md`, `education.md`, `skills.md`, `projects.md`, `personality.md`, `study_habits.md`, `advice_for_juniors.md`, `essay.md` and `faq.md`.
 
 I chose them to cover the required mix. `bio.md`, `education.md` and `skills.md` hold facts. `personality.md` and `study_habits.md` hold opinions, hobbies and habits. `projects.md` and `essay.md` are long-form. `faq.md` is written in my own voice, so the clone sounds like me.
 
 Rare keywords such as project names (SentinelGuard, Campus Marketplace, MindbridgeRAG_CareerAnxiety) give BM25 something exact to match. Plain descriptive passages, for example about how I recharge after a hard week, let dense search match questions that use different words.
+
+**Pipeline:** 25 chunks of ~250 words with 40 words overlap (file name and chunk ID kept). BM25 uses `rank_bm25`. Dense search uses `all-MiniLM-L6-v2` with cosine similarity in numpy; embeddings are precomputed and saved in `embeddings.npy`. Top-k = 3. The LLM is `openai/gpt-oss-20b` on Groq, with the key stored as a Space secret. The prompt forces first-person answers only from the retrieved context and "I don't have that in my notes" when the answer is missing. The app is built with Streamlit.
 
 ## 2. Test questions
 For every retrieved chunk (top 3) I checked by hand whether it **contains the answer** (Yes / No). Format: file #chunk number. "Hits" = how many of the 3 chunks contain the answer.
